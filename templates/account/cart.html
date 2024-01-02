@@ -1,0 +1,135 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+
+<section class="section-content padding-y">
+    <div class="container">
+    
+    <div class="row">
+        <main class="col-md-9">
+    <div class="card">
+    
+    <table class="table table-borderless table-shopping-cart">
+    <thead class="text-muted">
+    <tr class="small text-uppercase">
+      <th scope="col">Product</th>
+      <th scope="col" width="120">Quantity</th>
+      <th scope="col" width="120">Price</th>
+      <th scope="col" class="text-right" width="200"> </th>
+    </tr>
+    </thead>
+    <tbody>
+        {%for cart_item in cart.cart_items.all %}
+    <tr>
+        <td>
+            <figure class="itemside">
+                <div class="aside"><img src="/media/{{cart_item.product.image}}" class="img-sm"></div>
+                <figcaption class="info">
+                    <a href="#" class="title text-dark">{{cart_item.product.name}}</a>
+                    <p class="text-muted small">Size: {{cart_item.size_variant.size}}</p>
+                </figcaption>
+            </figure>
+        </td>
+        <td>
+            <var class="price">{{cart_item.quantity}}</var>
+        </td>
+        <td> 
+            <div class="price-wrap"> 
+                <var class="price">Rs. {{cart_item.get_item_total_price}}</var> 
+                <small class="text-muted"> Rs. {{cart_item.product.price |add:cart_item.size_variant.price}} per item </small> 
+            </div> <!-- price-wrap .// -->
+        </td>
+        <td class="text-right"> 
+        <a data-original-title="Save to Wishlist" title="" href="" class="btn btn-light" data-toggle="tooltip"> <i class="fa fa-heart"></i></a> 
+        <a href="{% url 'remove_cart_item' cart_item.uid %}" class="btn btn-light"> Remove</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+    
+    <div class="card-body border-top">
+        <button class="btn btn-primary float-md-right rzp-button1" id='rzp-button1'> Make Purchase <i class="fa fa-chevron-right"></i> </button>
+        <a href="#" class="btn btn-light"> <i class="fa fa-chevron-left"></i> Continue shopping </a>
+    </div>	
+    </div> <!-- card.// -->
+    
+    <div class="alert alert-success mt-3">
+        <p class="icontext"><i class="icon text-success fa fa-truck"></i> Free Delivery within 1-2 weeks</p>
+    </div>
+    
+        </main> <!-- col.// -->
+        <aside class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                        <dl class="dlist-align">
+                          <dt>Total price:</dt>
+                          <dd class="text-right">INR {{cart.get_total_price}}</dd>
+                        </dl>
+                        <dl class="dlist-align">
+                          <dt>Discount:</dt>
+                          <dd class="text-right">INR 0</dd>
+                        </dl>
+                        <dl class="dlist-align">
+                          <dt>Total:</dt>
+                          <dd class="text-right  h5"><strong>INR {{cart.get_total_price}}</strong></dd>
+                        </dl>
+                      
+                        
+                </div> <!-- card-body.// -->
+            </div>  <!-- card .// -->
+        </aside> <!-- col.// -->
+    </div>
+    
+    </div> <!-- container .//  -->
+    </section>
+
+    {% comment %} <button id="rzp-button1">Pay with Razorpay</button> {% endcomment %}
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <script>
+    var options = {
+        "key": "rzp_test_vqRITFkiAMYfV2", // Enter the Key ID generated from the Dashboard
+        "amount": "{{payment.amount}}", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+        "currency": "INR",
+        "name": "Exommerce App",
+        "description": "Test Transaction",
+        "image": "https://example.com/your_logo",
+        "order_id": "{{payment.id}}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+        "handler": function (response){
+
+            window.location.href = `{% url 'payment_success' %}?razorpay_payment_id=${response.razorpay_payment_id}&razorpay_order_id=${response.razorpay_order_id}&razorpay_signature=${response.razorpay_signature}`
+            //alert(response.razorpay_payment_id);
+            //alert(response.razorpay_order_id);
+            //alert(response.razorpay_signature)
+        },
+        "prefill": {
+            "name": "Gaurav Kumar",
+            "email": "gaurav.kumar@example.com",
+            "contact": "9000090000"
+        },
+        "notes": {
+            "address": "Razorpay Corporate Office"
+        },
+        "theme": {
+            "color": "#3399cc"
+        }
+    };
+    var rzp1 = new Razorpay(options);
+    rzp1.on('payment.failed', function (response){
+            alert(response.error.code);
+            alert(response.error.description);
+            alert(response.error.source);
+            alert(response.error.step);
+            alert(response.error.reason);
+            alert(response.error.metadata.order_id);
+            alert(response.error.metadata.payment_id);
+    });
+    document.getElementById('rzp-button1').onclick = function(e){
+        rzp1.open();
+        e.preventDefault();
+    }
+    </script>
+
+{% endblock %}
+

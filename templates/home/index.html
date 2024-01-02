@@ -1,0 +1,29 @@
+ {% extends "base/base.html" %}
+
+ {% block content %}
+
+ <div class="container mt-5 pt-5">
+    <div class="row">
+        {% for product in products %}
+        <div class="col-md-3">
+            <figure class="card card-product-grid">
+                <div class="img-wrap"> 
+                    <img src="/media/{{product.image}}" alt="Image not available">
+                    <span class="topbar">
+                        <a href="#" class="float-right"><i class="fa fa-heart"></i></a>
+                    </span>
+                    <a class="btn-overlay" href="#"><i class="fa fa-search-plus"></i> Quick view</a>
+                </div>
+                <figcaption class="info-wrap border-top">
+                    <a href="{% url 'get_product' product.slug %}" class="title">{{ product.name | capfirst}}</a>
+                    <div class="price mt-2">Rs. {{product.price | floatformat:2}}</div> <!-- price-wrap.// -->
+                </figcaption>
+            </figure> <!-- card // -->
+
+        </div> <!-- col.// -->
+        {% endfor %}
+    </div>
+
+    </div>
+
+{% endblock %}
