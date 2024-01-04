@@ -12,6 +12,10 @@ import os
 import razorpay
 from base import utils
 from random import randint
+import logging
+from django.contrib.auth.password_validation import validate_password
+
+logger = logging.getLogger(__name__)
 # Create your views here.
 load_dotenv()
 
@@ -19,9 +23,9 @@ load_dotenv()
 def verify_otp(request, user_id):
     if request.method == "POST":
         otp = request.POST.get('otp')
-        print(f'Email in request session >>>>>>>>> {request.session['email']}')
+        # print(f'Email in request session >>>>>>>>> {request.session['email']}')
         user_profile = UserProfile.objects.get(user__email=request.session['email'])
-        print(f'user profile OTP {user_profile.otp} AND request OTP {otp}')
+        # print(f'user profile OTP {user_profile.otp} AND request OTP {otp}')
         if user_profile.otp == otp:
             user_profile.is_otp_verified = True
             user_profile.save()
@@ -30,7 +34,7 @@ def verify_otp(request, user_id):
         else:
             messages.error(request, 'Invalid OTP')
             return redirect('verify_otp', user_id=user_profile.uid)
-    print(f'Email in request session >>>>>>>>> {request.session['email']}')
+    # print(f'Email in request session >>>>>>>>> {request.session['email']}')
     return render(request,'account/verify_otp.html')
 
 def check_token(request, reset_token):
@@ -48,7 +52,13 @@ def reset_password(request, reset_token):
         if new_password!= confirm_password:
             messages.error(request, 'Passwords do not match')
             return redirect('reset_password', reset_token=reset_token)
-        
+        if validate_password(new_password):
+            messages.error(request, 'Password must be at least 8 characters long')
+            messages.error(request, 'Password must contain at least 1 uppercase letter')
+            messages.error(request, 'Password must contain at least 1 lowercase letter')
+            messages.error(request, 'Password must contain at least 1 number')
+            return redirect('reset_password', reset_token=reset_token)
+
         profile = UserProfile.objects.get(pwd_reset_token=reset_token)
         if not profile:
             return HttpResponse("Invalid URL")
@@ -77,7 +87,7 @@ def forgot_password(request):
             try:
                 utils.send_password_reset_email(email, email_token)
             except Exception as e:
-                print(e)
+                logger.warning(f'Error sending email {e}')
             messages.success(request, 'Email sent successfully')
             return redirect('forgot_password')
 
@@ -93,17 +103,28 @@ def change_password(request):
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_password')
         user = request.user
+
+        if validate_password(new_password):
+            messages.error(request, 'Password must be at least 8 characters long')
+            messages.error(request, 'Password must contain at least 1 uppercase letter')
+            messages.error(request, 'Password must contain at least 1 lowercase letter')
+            messages.error(request, 'Password must contain at least 1 number')
+            return redirect('change_password')
+        
         if user.check_password(current_password):
             if new_password == confirm_password:
                 user.set_password(new_password)
                 user.save()
                 messages.success(request, 'Password changed successfully')
+                logger.info(f'Password changed successfully')
                 return redirect('change_password')
             else:
                 messages.error(request, 'Passwords do not match')
+                logger.error(f'Passwords do not match')
                 return redirect('change_password')
         else:
             messages.error(request, 'Incorrect password')
+            logger.error(f'Incorrect password')
             return redirect('change_password')
     return render(request, 'account/change_password.html')
 
@@ -121,15 +142,15 @@ def login(request):
         password = request.POST.get('password')
 
         user_obj = User.objects.filter(username=email)
-        print(f'Log in password >>>>>>>>>>: {password}')
-        print(f'User object>>>>> {user_obj}')
+        #  print(f'Log in password >>>>>>>>>>: {password}')
+        # print(f'User object>>>>> {user_obj}')
 
         if not user_obj.exists():
             messages.error(request, 'User does not exist')
             return HttpResponseRedirect(request.path_info)
         #authenticate a user
         user_obj = authenticate(username=email, password=password)
-        print(f'Log in user obj >>>>>>>>>>: {user_obj}')
+        # print(f'Log in user obj >>>>>>>>>>: {user_obj}')
         if user_obj:
             #log in the authenticated user
             # auth_login(request, user_obj)
@@ -143,6 +164,7 @@ def login(request):
             return redirect('verify_otp', user_id=user_profile.uid)
         else:
             messages.error(request, 'Invalid credentials')
+            logger.error(f'Invalid credentials')
             return HttpResponseRedirect(request.path_info)
         
     return render(request, 'account/login.html')
@@ -154,7 +176,14 @@ def register(request):
         email = request.POST.get('email')
         phone_number = request.POST.get('phone_number')
         password = request.POST.get('password')
-        print(f'Register password >>>>>>>>: {password}')
+        if validate_password(password):
+            messages.error(request, 'Password must be at least 8 characters long')
+            messages.error(request, 'Password must contain at least 1 uppercase letter')
+            messages.error(request, 'Password must contain at least 1 lowercase letter')
+            messages.error(request, 'Password must contain at least 1 number')
+            return HttpResponseRedirect(request.path_info)
+        
+        # print(f'Register password >>>>>>>>: {password}')
         if not first_name or not last_name or not email or not phone_number or not password:
             messages.error(request, 'Please fill all the fields')
             return HttpResponseRedirect(request.path_info)
@@ -208,12 +237,12 @@ def show_cart(request):
 
     if cart:
         client = razorpay.Client(auth=(os.getenv('RAZORPAY_KEY'), os.getenv('RAZORPAY_SECRET')))
-        print(f'razor pay client >>>>>>> {os.getenv('RAZORPAY_KEY')} {os.getenv('RAZORPAY_SECRET')}')
+        # print(f'razor pay client >>>>>>> {os.getenv('RAZORPAY_KEY')} {os.getenv('RAZORPAY_SECRET')}')
         if cart.get_total_price() > 1:
             payment = client.order.create({'amount': int(cart.get_total_price()) * 100, 'currency': 'INR', 'payment_capture': 1})
             cart.razorpay_payment_id = payment['id']
             cart.save()
-            print(f'payment object: {payment}')
+            # print(f'payment object: {payment}')
 
     context = {'cart': cart, 'payment': payment}
     return render(request, 'account/cart.html', context)

@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 from .models import Product
+import logging
+
+logger = logging.getLogger(__name__)
 
 @login_required(redirect_field_name='next',login_url='login')
 def get_product(request, slug):
@@ -18,4 +21,5 @@ def get_product(request, slug):
         
         return render(request, 'product/product.html', context)
     except Product.DoesNotExist:
+        logger.error(f'Product with slug {slug} does not exist')
         return render(request, '404.html')
