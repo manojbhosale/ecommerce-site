@@ -148,33 +148,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = '<host user email>'
-EMAIL_HOST_PASSWORD = '<password>'
-
-
-LOGGING = {
-    "version": 1,  # the dictConfig format version
-    "disable_existing_loggers": False,  # retain the default loggers
-    "handlers": {
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": "general.log",
-        },
-    },
-}
-
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimila‌​rityValidator', 
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValida‌​tor',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValid‌​ator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordVali‌​dator',
-    }
-]
+EMAIL_HOST_USER = 'manoj.bhosale31@gmail.com'
+EMAIL_HOST_PASSWORD = 'wxun kgsi sgpq focj'
